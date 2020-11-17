@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="./normalize.css">
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Rubik:wght@500&display=swap" rel="stylesheet">  
+        <link rel="stylesheet" href="./styles.css">
+    </head>
+    <body>
+        <h2>
+            РЕГИСТРАЦИЯ
+        </h2>
+        <section>
+            <p>
+                Сейчас у нас почти всё готово, 
+                чтобы регистрировать пользователей прямо в приложении.
+            </p>
+            <p>
+                Чтобы это сделать, нам понадобятся следующие компоненты:
+            </p>
+            <ol>
+                <li>
+                    <a href="#form">форма регистрации;</a>
+                </li>
+                <li>
+                    <a href="#handler">соответствующий view;</a>
+                </li>
+                <li>
+                    <a href="#template">шаблон для регистрации;</a>
+                </li>
+                <li>
+                    <a href="#urls">зарегистрировать view в urls.</a>
+                </li>
+            </ol>
+        </section>
+        <section>
+            <h3>
+                <a name="form"></a>
+                Форма
+            </h3>
+            <p>
+                Добавьте такую форму в <strong>accounts/forms.py</strong>:
+            </p>
+            <div class="code">
+                <pre class="code__text">
+    from django.contrib.auth.models import User
+    # …
+
+    class RegistrationForm(forms.ModelForm):
+        password = forms.CharField(label='Пароль', widget=forms.PasswordInput)
+        password2 = forms.CharField(
+            label='Повторите пароль', widget=forms.PasswordInput)
+        class Meta:
+            model = User
+            fields = ("username", "first_name", "email")
+        def clean_password2(self):
+            cd = self.cleaned_data
+            if cd["password"] != cd["password2"]:
+                raise forms.ValidationError("Пароли не совпадают")
+            return cd["password2"]
+                </pre>
+            </div>
+            <div>
+                <p>Отметим сразу несколько моментов:</p>
+                <ul>
+                    <li class="inner-list">
+                        В форме два поля для пароля. Это сделано, 
+                        чтобы реализовать паттерн "введите пароль два раза".
+                    </li>
+                    <li class="inner-list">
+                        Мы ограничиваем в этой форме поля, 
+                        спрашивая пользователя только username, имя, и почту.
+                    </li>
+                    <li class="inner-list">
+                        За совпадение паролей отвечает функция clean_password2.
+                    </li>
+                </ul>
+                <p>Функции в формах, которые начинаются с clean_, 
+                    обозначают правила, по которым то или иное поле 
+                    попадает в словарь cleaned_data после валидации. 
+                    В момент, когда мы дёргаем метод form.is_valid() из какого-нибудь 
+                    нашего view, джанго смотрит, есть ли какие-то методы, 
+                    которые называются подобным образом и вызывает их. 
+                    Ожидается что результат, к примеру, метода clean_SOMETHING 
+                    попадёт в словарь cleaned_data с ключом SOMETHING. 
+                    Внутри формы, при условии, что у нас не получилось совпасть паролями, 
+                    мы поднимаем соответствующее исключение.
+                </p>
+                <p>
+                    Вообще, конечно, мы здесь опять немного крафтово подходим, 
+                    потому что в <strong>django.contrib.auth.forms</strong> есть класс формы для такого случая 
+                    и он называется <strong>UserCreationForm</strong>. Он делает похожие вещи.
+                </p>
+                
+            </div>
+        </section>
+        <section>
+            <h3>
+                <a name="handler"></a>
+                Обработчик
+            </h3>
+            <p>
+                Теперь надо добавить разработчик, который будет отображать 
+                шаблон и валидировать форму. Для разнообразия сделаем его функцией. 
+                Допишите подобные строки в <strong>accounts/views.py</strong>:
+            </p>
+            <div class="code">
+                <pre class="code__text">
+    def register(request):
+    if request.method == "POST":
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            new_user = form.save(commit=False)
+            new_user.set_password(form.cleaned_data["password"])
+            new_user.save()
+
+            return render(request, "accounts/registration_complete.html",
+                            {"new_user": new_user})
+    else:
+        form = RegistrationForm()
+
+    return render(request, "accounts/register.html", {"user_form": form})</pre>
+            </div>
+            <div>
+                <p class="note">Не забудьте в шапке документа импортировать форму.</p>
+                <p>Глобально здесь не происходит ничего нового, за исключением одного нюанса: 
+                    джанга не хранит пароли в чистом виде, поэтому мы не можем просто взять 
+                    и сказать user.password = 'qwerty' . Мы используем для этого метод set_password, 
+                    который зашифрует пароль и сохранит его в базу для этого пользователя, 
+                    когда мы вызовем new_user.save()</p>
+            </div>
+        </section>
+        <section>
+            <h3>
+                <a name="template"></a>
+                Шаблоны
+            </h3>
+            <p>
+                Как можно видеть из кода выше, нам нужно два шаблона для регистрации. 
+                Один из них ‒ <strong>accounts/register.html</strong>:
+            </p>
+            <div class="code">
+                <pre class="code__text">
+    {% extends "base.html" %}
+    
+    {% block title %}Зарегистрироватьсяt{% endblock %}
+
+    {% block main_content %}
+    &lt;h1&gt;Создать аккаунт&lt;/h1&gt;
+    &lt;p>Воспользуйтесь следующей формой:&lt;/p&gt;
+    &lt;form action="." method="post"&gt;
+        {{ user_form.as_p }}
+        {% csrf_token %}
+        &lt;p&gt;&lt;input type="submit" value="Создать"&gt;&lt;/p&gt;
+    &lt;/form&gt;
+    {% endblock %}</pre>
+            </div>
+            <p>
+                Второй шаблон, который мы показываем после того, как успешно создали пользователя:
+            </p>
+            <div class="code">
+                <pre class="code__text">
+    {% extends "base.html" %}
+
+    {% block title %}Ура! Успех{% endblock %}
+
+    {% block main_content %}
+        &lt;h1&gt;Всё готово, {{ new_user.first_name }}!&lt;/h1&gt;
+        &lt;p&gt;Ваш аккаунт был создал, теперь можно &lt;a href="{% url "login"%}">залогиниться&lt;/a&gt;.&lt;/p&gt;
+    {% endblock %}</pre>
+            </div>
+            <p>
+                Далее мы используем пользователя, которого создали, чтобы сделать персонифицированное обращение. Заодно добавляем ссылку на регистрацию.
+            </p>
+        </section>
+        <section>
+            <h3>
+                <a name="urls"></a>
+                Urls
+            </h3>
+            <p>
+                В <strong>accounts/urls.py</strong> мы регистрируем нашу функцию. Обратите внимание, что так как это уже функция, нам не надо вызывать каких-то as_view(). 
+                Некоторым такой подход кажется более "чистым":
+            </p>
+            <div class="code">
+                <pre class="code__text">
+    statupath('register/', views.register, name='register')</pre>
+            </div>
+        </section>
+        <section>
+            <h3>
+                Убедимся, что работает
+            </h3>
+            <p>
+                Проверим, что всё работает:
+            </p>
+            <img class="block" 
+                src="https://lh3.googleusercontent.com/15VdcXMBBGSPsWdbR8-BlvBdlaZqw6hDToWgcJK6q8BN_mwfT6sM1zB9Mgoovr1asX_MdsflHbcY40MCyrqsZ2W8S8r_K7Yltb5s0DReMtoie8bzNoJMeTTMGJSpCwtqxU8lkxGn"
+                alt="создать аккаунт"
+                >
+            <p>
+                После регистрации: 
+            </p>
+            <img class="block" 
+                src="https://lh3.googleusercontent.com/j3IlLZMjLt3Iltr1uxZo8uMumnTdKTHqJS-AhnzAgI5p6GoZr8aLC70CZpjc47SyRinKPd8iCgNbewbXfYdVKOK1sn71XGiOLZpaEQaPOziaftVBHBcjm5O7TvgdR2XdOAbyWUsX"
+                alt="аккаунт был создан">
+            <p>
+                Самого пользователя можно будет найти в админке:
+            </p>
+            <img class="block" 
+                src="https://lh6.googleusercontent.com/CV4d6pClAkniU05jE2olTcU1XX_m0on-ZlwoRU5T57WJLeTKl0Vs9HgNx_QLIcm_eVWZlyZyNDLHLHQ4L7agnMfe-FXOeMDQTcRbIpk5nr-ULEdtIpR28c3jKX6Z3iROc7afGDAy"
+                alt="список пользователей в админке">
+            <p>
+                <strong>Ещё один момент.</strong>
+            </p>
+            
+            <div class="note">
+                <p>
+                Хорошим тоном будет теперь добавить в шаблон для логина ссылку на страницу регистрации, типа такой:
+                </p>
+                <div class="code">
+                    <pre class="code__text">
+    &lt;a href="{% url "register" %}"&gt;зарегистрироваться&lt;/a&gt;</pre>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>

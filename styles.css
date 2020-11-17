@@ -1,0 +1,153 @@
+body {
+    font-size: 20px;
+    color: #000;
+    background-color: #fff;
+    width: 1170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 50px auto;
+    box-shadow: 0px 0px 18px 5px rgba(190,190,190,0.58);
+}
+
+h2 {
+    font-family: 'Rubik',Arial,sans-serif;
+    line-height: 1.2;
+    font-size: 48px;
+    font-weight: 500;
+    text-align: center;
+}
+
+h3 {
+    font-family: 'Rubik',Arial,sans-serif;
+    line-height: 1.2;
+    font-size: 36px;
+    font-weight: 500;
+    text-align: left;
+    color: rgb(44, 44, 44);
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 3px solid #3d7e9a;
+}
+
+section {
+    font-family: 'IBM Plex Mono',Arial,sans-serif;
+    line-height: 1.55;
+    font-weight: 400;
+    background-color: #fff;
+    padding: 40px;
+}
+
+section:nth-child(even){
+    background-color: rgb(248, 248, 248);
+}
+
+p {
+    text-indent: 35px;
+}
+
+ul li {
+    list-style: none;
+}
+
+li {
+    padding-left: 5px;
+    padding-bottom: 10px;
+}
+
+li:last-child {
+    padding-bottom: 0;
+}
+
+ol {
+    margin-left: 50px;
+	list-style-type: none;
+    counter-reset: num;
+}
+
+ol li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+ol li::before {
+	content: counter(num);
+	counter-increment: num;
+	display: inline-block;
+	position: absolute;
+	top: -15px;
+	left: -50px;
+	width: 50px;
+	color: #ef6780;
+	text-align: center;
+	font-size: 40px;
+	font-weight: bold;
+}
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+a:hover {
+    color: #ef6780;
+}
+
+.inner-list {
+    padding-left: 40px;
+    position: relative;
+}
+
+.inner-list::before {
+    content: "";
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    height: 8px;
+    width: 8px;
+    border: solid  #4ba0eb;
+    border-width: 3px 3px 0 0;
+    transform: rotate(45deg);
+}
+
+.inner-list::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    top: 14px;
+    height: 3px;
+    width: 10px;
+    background-color: #4ba0eb;
+}
+
+.code {
+    border-color: #4ba0eb;
+    border-style: solid;
+    border-width: 0 0 0 5px;
+    background-color: #eee;
+}
+
+.code__text {
+    padding: 15px;
+    position: relative;
+    font-family: consolas,monaco,"Andale Mono",monospace;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+    overflow: auto;
+}
+
+.note {
+    border-color: #f6b73c;
+    border-style: solid;
+    border-width: 0 0 0 5px;
+    background-color: #fff3d4;
+    position: relative;
+    padding: 5px 20px;
+}
+
+.block {
+    display: block;
+    margin: 30px auto;
+}
